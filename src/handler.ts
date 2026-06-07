@@ -63,7 +63,10 @@ async function processRecord(record: SQSRecord): Promise<void> {
   let skuMappings: SkuMapping[];
   try {
     skuMappings = await getSkuMappings();
-  } catch (err) {
+  } catch (err) {// leaves skuMappings undefined, properties cannot be read
+    const message = `ERP mapping fetch failed: ${(err as Error).message}`;
+    await updateOrderPhase(order.orderId, "A0", message);
+    return;
   }
 
   // Step 5: Build and create sales order in ERP
@@ -106,7 +109,7 @@ async function processRecord(record: SQSRecord): Promise<void> {
     const erpSalesOrderId = await createSalesOrder(erpOrder);
     console.log(`Created ERP sales order: ${erpSalesOrderId} for order ${order.orderId}`);
 
-    updateOrderPhase(order.orderId, "A1");
+    await updateOrderPhase(order.orderId, "A1"); //missing await, handler returned before dynamodb update is finished
   } catch (err) {
     console.error(`Failed to create ERP sales order for ${order.orderId}:`, err);
     await updateOrderPhase(order.orderId, "A0", `ERP creation failed: ${(err as Error).message}`);

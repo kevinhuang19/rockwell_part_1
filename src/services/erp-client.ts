@@ -27,7 +27,7 @@ export async function getSkuMappings(): Promise<SkuMapping[]> {
     const data = (await response.json()) as { mappings: SkuMapping[] };
     allMappings.push(...data.mappings);
 
-    hasMore = data.mappings.length > 50;
+    hasMore = data.mappings.length >= 50;// when it returns 50 results, the condition > 50 is false. so it stops paginating. any sku greater than 2 is never found.
 
     page++;
   }
